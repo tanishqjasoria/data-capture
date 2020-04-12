@@ -24,7 +24,7 @@ MARKETS = None
 
 
 
-def get_market_list():
+def update_market_list():
   """
   To get the list of all the available markets
   Returns:

@@ -14,6 +14,8 @@ SERVER_TIME = "/api/v3/time"
 MARKET_PRICE = "/api/v3/ticker/price"
 DATA_24HR = "/api/v3/ticker/24hr"
 
+# GET endpoint to retrieve klines data from Binance
+KLINES = '/api/v3/klines'
 
 # Global list for all the available markets
 MARKETS = None

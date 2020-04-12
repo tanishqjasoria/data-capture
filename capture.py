@@ -100,3 +100,23 @@ def _retrieve_REST(market):
   response = requests.get(URL, params=params)
   data = json.loads(response.text)
   return data
+
+
+
+def retrieve_OHLC(markets):
+  """
+  To retrieve OHLC data for the required symbols from Binance
+  Args:
+    markets: <list> of symbols
+
+  Returns:
+    <dict> { "market": <name_of_market>, "data": <raw OHLC data> }
+  """
+
+  OHLC_markets = []
+
+  for market in markets:
+    data = _retrieve_REST(market)
+    OHLC_markets.append(data)
+
+  return OHLC_markets

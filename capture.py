@@ -43,3 +43,36 @@ def get_market_list():
 
   # Populate the global variable
   MARKETS = market_names
+
+
+
+def ping():
+  """
+  To check if the Binance server is reachable
+
+  Exceptions:
+    ConnectionError,, if the connection to server is not possible
+  """
+  URL = BASE_REST + CONN_TEST
+
+  response = requests.get(URL)
+
+  if response.status_code != 200:
+    raise ConnectionError("Connection to the server not possible." +
+        response.text)
+
+
+
+def server_time():
+  """
+  To get the server time in UNIX time format
+  Returns:
+    <int>
+  """
+  URL = BASE_REST + SERVER_TIME
+
+  response = requests.get(URL)
+  UNIX_time = json.loads(response.text)["serverTime"]
+
+  return UNIX_time
+

@@ -78,3 +78,25 @@ def server_time():
 
   return UNIX_time
 
+
+
+def _retrieve_REST(market):
+  """
+  To retrieve the data using the RESTful API
+  Args:
+    market: <str> name of the market
+
+  Returns:
+    <dict> of raw OHLC data
+  """
+  URL = BASE_REST + KLINES
+
+  params = {
+    "symbol": market,
+    "interval": '1m',
+    "limit": 1
+  }
+
+  response = requests.get(URL, params=params)
+  data = json.loads(response.text)
+  return data

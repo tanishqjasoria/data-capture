@@ -1,6 +1,6 @@
+import concurrent.futures
 import json
 import requests
-import websocket
 
 
 # The base endpoint for the Binance RESTful API
@@ -113,10 +113,34 @@ def retrieve_OHLC(markets):
     <dict> { "market": <name_of_market>, "data": <raw OHLC data> }
   """
 
-  OHLC_markets = []
+  OHLC_markets = {}
+  response_error = []
 
-  for market in markets:
-    data = _retrieve_REST(market)
-    OHLC_markets.append(data)
+  with concurrent.futures.ThreadPoolExecutor(
+      max_workers=len(MARKETS)) as executor:
 
-  return OHLC_markets
+    market_workers = {executor.submit(_retrieve_REST, market):
+        market for market in markets}
+
+    for worker in concurrent.futures.as_completed(market_workers):
+      market = market_workers[worker]
+      # print(market)
+      try:
+        raw_data = worker.result()
+        data = raw_data[0]
+        # print(data)
+        OHLC = {
+          "open": float(data[1]),
+          "high": float(data[2]),
+          "low": float(data[3]),
+          "close": float(data[4]),
+          "volume": float(data[5]),
+          "open_time": data[0],
+          "close_time": data[6]
+        }
+        OHLC_markets[market] = OHLC
+      except Exception as error:
+        print(error)
+        response_error.append(market)
+
+  return OHLC_markets, response_error

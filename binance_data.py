@@ -21,8 +21,8 @@ KLINES = '/api/v3/klines'
 # Global list for all the available markets
 MARKETS = None
 
-
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def update_market_list():

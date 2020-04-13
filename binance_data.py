@@ -1,5 +1,6 @@
 import concurrent.futures
 import json
+import logging
 import requests
 
 
@@ -21,8 +22,8 @@ KLINES = '/api/v3/klines'
 MARKETS = None
 
 
-
-
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def update_market_list():
   """
@@ -45,6 +46,7 @@ def update_market_list():
 
   # Populate the global variable
   MARKETS = market_names
+  logger.info('Market list updated!')
 
 
 
@@ -60,8 +62,10 @@ def ping():
   response = requests.get(URL)
 
   if response.status_code != 200:
-    raise ConnectionError("Connection to the server not possible." +
+    logger.error("Binance server unreachable")
+    raise ConnectionError("Binance server unreachable" +
         response.text)
+  logger.info("Binance server is UP!")
 
 
 
@@ -76,6 +80,7 @@ def server_time():
   response = requests.get(URL)
   UNIX_time = json.loads(response.text)["serverTime"]
 
+  logger.info("Binance server time: " + str(UNIX_time))
   return UNIX_time
 
 
@@ -116,6 +121,7 @@ def retrieve_OHLC(markets):
   OHLC_markets = {}
   response_error = []
 
+  logger.info("Fetching data from Binance.")
   with concurrent.futures.ThreadPoolExecutor(
       max_workers=len(MARKETS)) as executor:
 
@@ -143,4 +149,5 @@ def retrieve_OHLC(markets):
         print(error)
         response_error.append(market)
 
+  logger.info("Data fetch completed!")
   return OHLC_markets, response_error

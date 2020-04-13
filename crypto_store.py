@@ -1,6 +1,8 @@
 import binance_data
+from collections import defaultdict
 from influxdb import InfluxDBClient
 from multiprocessing import Process
+import pandas as pd
 import sys
 import time
 
@@ -20,6 +22,16 @@ MEASUREMENT_1H = 'CRYPTO_1H'
 
 # Time precision of the Binance server is in miliseconds
 PRECISION = 'ms'
+
+# Arrays to store required information to calculate 5M, 15M, 30M, 1H Ticker.
+TICKER_5M = []
+TICKER_15M = []
+TICKER_30M = []
+TICKER_1H = []
+
+# To store the amount of data points collected, would be useful
+# in calculation of tick data for different intervals
+COUNT = 0
 
 
 
@@ -69,6 +81,7 @@ def record_update(client):
   # print(json_body)
   client.write_points(json_body,time_precision=PRECISION)
   print('stop')
+  calculate_tick_data(client, OHLC_data)
 
 
 
@@ -107,6 +120,85 @@ def run_data_collection(client):
       time.sleep(0.1)
       # Free all the resources associated with the process
       i.close()
+
+
+
+def calculate_tick_data(client, OHLC_data):
+  """
+  To calculate ticker for various time intervals
+  Args:
+    OHLC_data: <dict>
+  Returns:
+    <None>
+  """
+  # global - to modify globally defined variables
+  global TICKER_5M
+  global TICKER_15M
+  global TICKER_30M
+  global TICKER_1H
+
+  # How to calculate 5M, 15M, 30M, 1H ticker from 1M ticker?
+  # Average of 5x 1M ticker would give 5M ticker
+  # Average of 3x 5M ticker would give 15M ticker
+  # Average of 2x 15M ticker would give 30M ticker
+  # Average of 2x 30M ticker would give 1H ticker
+
+  TICKER_5M.append(OHLC_data)
+
+  if COUNT % 5 == 0:
+    data = _process_ticker(TICKER_5M)
+    TICKER_15M.append(data)
+    json_body = convert_to_json_schema(MEASUREMENT_5M, data)
+    client.write_points(json_body, time_precision=PRECISION)
+    TICKER_5M = []
+
+  if COUNT % 15 == 0:
+    data = _process_ticker(TICKER_15M)
+    TICKER_30M.append(data)
+    json_body = convert_to_json_schema(MEASUREMENT_15M, data)
+    client.write_points(json_body, time_precision=PRECISION)
+    TICKER_15M = []
+
+  if COUNT % 30 == 0:
+    data = _process_ticker(TICKER_30M)
+    TICKER_1H.append(data)
+    json_body = convert_to_json_schema(MEASUREMENT_30M, data)
+    client.write_points(json_body, time_precision=PRECISION)
+    TICKER_30M = []
+
+  if COUNT % 60 == 0:
+    _process_ticker(TICKER_1H)
+    json_body = convert_to_json_schema(MEASUREMENT_1H, data)
+    client.write_points(json_body, time_precision=PRECISION)
+    TICKER_1H = []
+
+
+
+def _process_ticker(ticker):
+  """
+  To calculate ticker from all the tick data present in 'ticker' list
+  Args:
+    ticker: <list>
+
+  Returns:
+    <dict>
+
+  """
+
+  ticker_collection = defaultdict(list)
+
+  for data in ticker:
+    for market in binance_data.MARKETS:
+      ticker_collection[market].append(data[market])
+
+  ticker_average = {}
+  for market, data in ticker_collection.items():
+    df = pd.DataFrame(data)
+    aggregator = {"open": 'first', "high": 'max', "low": 'min', "close": 'last',
+                  "volume": 'sum', "open_time": 'first', "close_time": 'last'}
+    ticker_average[market] = dict(df.agg(aggregator))
+
+  return ticker_average
 
 
 
@@ -157,7 +249,3 @@ if __name__=='__main__':
     else:
       print("Enter valid argument")
       exit(1)
-  
-
-
-

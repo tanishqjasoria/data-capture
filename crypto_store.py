@@ -2,10 +2,10 @@ import binance_data
 from collections import defaultdict
 from influxdb import InfluxDBClient
 import logging
-from multiprocessing import Process
 import pandas as pd
 import sys
 import time
+import threading
 
 # Default HOST and PORT for the local instance of InfluxDB
 HOST = 'localhost'
@@ -34,6 +34,7 @@ TICKER_1H = []
 # in calculation of tick data for different intervals
 COUNT = 0
 
+LOCK = threading.Lock()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -76,6 +77,7 @@ def record_update(client):
   """
   A full pipeline from fetch (from Binance) to insert (InfluxDB)
   """
+
   logger.info("Record Start.")
   OHLC_data, errors = binance_data.retrieve_OHLC(binance_data.MARKETS)
   json_body = convert_to_json_schema(MEASUREMENT_1M, OHLC_data)
@@ -90,8 +92,8 @@ def run_data_collection(client):
   Now the primary functionality if to retrieve market data from binance
   every 1 minute (1m Ticker). To accomplish that 'record_update' need to
   be scheduled to run every one second. time.sleep() is a blocking call,
-  therefore using the multiprocessing module to add parallism to the module
-  The main functionality - spawn a new 'record_update' process every 1 minute
+  therefore using the threading module to add parallism to the module
+  The main functionality - spawn a new 'record_update' thtread every 1 minute
   Args:
     client: database client which need to be used to store the collected data
 
@@ -99,28 +101,19 @@ def run_data_collection(client):
     <None>
   """
 
-  process_list = []
-
   try:
     while True:
       # Initialize a process
-      p = Process(target=record_update, args=(client,))
+      p = threading.Thread(target=record_update, args=(client,), daemon=True)
       # Start the process to run independently of main
       p.start()
       # TODO: Define a function which can act as a garbage collector, which can periodicly
       # check for not active processes and free the resources
-      process_list.append(p)
       time.sleep(60)
   except KeyboardInterrupt:
     # Kill all the processes which are alive
     logger.error("KeyboardInterrupt! Exiting.")
-    for i in process_list:
-      # If the process is still running, kill the process - SIGKILL
-      if i.is_alive():
-        i.kill()
-      time.sleep(0.1)
-      # Free all the resources associated with the process
-      i.close()
+    exit(1)
 
 
 

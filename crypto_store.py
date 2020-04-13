@@ -1,6 +1,7 @@
 import binance_data
 from influxdb import InfluxDBClient
-
+from multiprocessing import Process
+import time
 
 # Default HOST and PORT for the local instance of InfluxDB
 HOST = 'localhost'
@@ -110,3 +111,30 @@ if __name__=='__main__':
 
   # Setup the database for storing market data
   client = database_setup()
+
+  # Now the primary functionality if to retrieve market data from binance
+  # every 1 minute (1m Ticker). To accomplish that 'record_update' need to
+  # be scheduled to run every one second. time.sleep() is a blocking call,
+  # therefore using the multiprocessing module to add parallism to the module
+  # The main function would spawn a new 'record_update' process every 1 minute
+  process_list = []
+
+  try:
+    while True:
+      # Initialize a process
+      p = Process(target=record_update, args=(client,))
+      # Start the process to run independently of main
+      p.start()
+      # TODO: Define a function which can act as a garbage collector, which can periodicly
+      # check for not active processes and free the resources
+      process_list.append(p)
+      time.sleep(60)
+  except KeyboardInterrupt:
+    # Kill all the processes which are alive
+    for i in process_list:
+      # If the process is still running, kill the process - SIGKILL
+      if i.is_alive():
+        i.kill()
+      time.sleep(0.1)
+      # Free all the resources associated with the process
+      i.close()

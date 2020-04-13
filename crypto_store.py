@@ -136,6 +136,9 @@ def calculate_tick_data(client, OHLC_data):
   global TICKER_15M
   global TICKER_30M
   global TICKER_1H
+  global COUNT
+
+  COUNT = COUNT + 1
 
   # How to calculate 5M, 15M, 30M, 1H ticker from 1M ticker?
   # Average of 5x 1M ticker would give 5M ticker
@@ -171,6 +174,7 @@ def calculate_tick_data(client, OHLC_data):
     json_body = convert_to_json_schema(MEASUREMENT_1H, data)
     client.write_points(json_body, time_precision=PRECISION)
     TICKER_1H = []
+    COUNT = 0
 
 
 

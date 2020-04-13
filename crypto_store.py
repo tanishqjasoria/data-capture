@@ -194,8 +194,10 @@ def _process_ticker(ticker):
   ticker_average = {}
   for market, data in ticker_collection.items():
     df = pd.DataFrame(data)
-    aggregator = {"open": 'first', "high": 'max', "low": 'min', "close": 'last',
-                  "volume": 'sum', "open_time": 'first', "close_time": 'last'}
+    aggregator = {'open': lambda x:x[0], 'high': 'max', 'low': 'min', 'close':
+      lambda x: list(x).pop(), 'volume': 'sum', 'open_time': lambda x: x[0],
+      'close_time': lambda x:list(x).pop()}
+
     ticker_average[market] = dict(df.agg(aggregator))
 
   return ticker_average

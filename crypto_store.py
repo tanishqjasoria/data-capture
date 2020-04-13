@@ -1,6 +1,7 @@
 import binance_data
 from collections import defaultdict
 from influxdb import InfluxDBClient
+import logging
 from multiprocessing import Process
 import pandas as pd
 import sys
@@ -34,8 +35,8 @@ TICKER_1H = []
 COUNT = 0
 
 
-
-
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def database_setup():
 
@@ -46,6 +47,7 @@ def database_setup():
   # this would just return without any exception
   client.create_database(DATABASE)
   client.switch_database(DATABASE)
+  logger.info("Database setup complete.")
   return client
 
 
@@ -74,13 +76,11 @@ def record_update(client):
   """
   A full pipeline from fetch (from Binance) to insert (InfluxDB)
   """
-  print('start')
+  logger.info("Record Start.")
   OHLC_data, errors = binance_data.retrieve_OHLC(binance_data.MARKETS)
-  # print(OHLC_data)
   json_body = convert_to_json_schema(MEASUREMENT_1M, OHLC_data)
-  # print(json_body)
   client.write_points(json_body,time_precision=PRECISION)
-  print('stop')
+  logger.info("[1M] Write to Database successful.")
   calculate_tick_data(client, OHLC_data)
 
 
@@ -113,6 +113,7 @@ def run_data_collection(client):
       time.sleep(60)
   except KeyboardInterrupt:
     # Kill all the processes which are alive
+    logger.error("KeyboardInterrupt! Exiting.")
     for i in process_list:
       # If the process is still running, kill the process - SIGKILL
       if i.is_alive():
@@ -139,7 +140,7 @@ def calculate_tick_data(client, OHLC_data):
   global COUNT
 
   COUNT = COUNT + 1
-
+  logger.info("COUNT: " + str(COUNT))
   # How to calculate 5M, 15M, 30M, 1H ticker from 1M ticker?
   # Average of 5x 1M ticker would give 5M ticker
   # Average of 3x 5M ticker would give 15M ticker
@@ -153,6 +154,7 @@ def calculate_tick_data(client, OHLC_data):
     TICKER_15M.append(data)
     json_body = convert_to_json_schema(MEASUREMENT_5M, data)
     client.write_points(json_body, time_precision=PRECISION)
+    logger.info("[5M] Write to database complete.")
     TICKER_5M = []
 
   if COUNT % 15 == 0:
@@ -160,6 +162,7 @@ def calculate_tick_data(client, OHLC_data):
     TICKER_30M.append(data)
     json_body = convert_to_json_schema(MEASUREMENT_15M, data)
     client.write_points(json_body, time_precision=PRECISION)
+    logger.info("[15M] Write to database complete.")
     TICKER_15M = []
 
   if COUNT % 30 == 0:
@@ -167,12 +170,14 @@ def calculate_tick_data(client, OHLC_data):
     TICKER_1H.append(data)
     json_body = convert_to_json_schema(MEASUREMENT_30M, data)
     client.write_points(json_body, time_precision=PRECISION)
+    logger.info("[30M] Write to database complete.")
     TICKER_30M = []
 
   if COUNT % 60 == 0:
     _process_ticker(TICKER_1H)
     json_body = convert_to_json_schema(MEASUREMENT_1H, data)
     client.write_points(json_body, time_precision=PRECISION)
+    logger.info("[1H] Write to database complete.")
     TICKER_1H = []
     COUNT = 0
 

@@ -56,6 +56,20 @@ def convert_to_json_schema(measurement, OHLC_data):
 
 
 
+def record_update(client):
+  """
+  A full pipeline from fetch (from Binance) to insert (InfluxDB)
+  """
+  print('start')
+  OHLC_data, errors = binance_data.retrieve_OHLC(binance_data.MARKETS)
+  # print(OHLC_data)
+  json_body = convert_to_json_schema(MEASUREMENT_1M, OHLC_data)
+  # print(json_body)
+  client.write_points(json_body,time_precision=PRECISION)
+  print('stop')
+
+
+
 def _format(measurement, market, OHLC):
   """
   To format the data according to the json schema

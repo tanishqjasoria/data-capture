@@ -217,16 +217,16 @@ def _format(measurement, market, OHLC):
 
   json_elem = {
     "measurement": measurement,
-    "tags":{
+    "tags": {
       "Market": market
     },
-    "time": OHLC['open_time'],
-    "fields":{
-      "Open":OHLC['open'],
-      "Close":OHLC['close'],
-      "High":OHLC['high'],
-      "Low":OHLC['low'],
-      "Volume":OHLC['volume']
+    "time": int(OHLC['open_time']),
+    "fields": {
+      "Open": OHLC['open'],
+      "Close": OHLC['close'],
+      "High": OHLC['high'],
+      "Low": OHLC['low'],
+      "Volume": OHLC['volume']
     }
 
   }

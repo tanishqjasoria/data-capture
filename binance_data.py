@@ -24,6 +24,43 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+
+
+
+def requests_error_handeling(func):
+  """
+  Decorator for error handeling,
+  Mainly, log and ignore the error as this module is meant to be use periodicly,
+  This ensure safe return in case of an exception.
+  Args:
+    func:
+
+  Returns:
+    Modified function
+  """
+  def handler(*args, **kwargs):
+    try:
+      return func(*args, **kwargs)
+
+    except requests.exceptions.ConnectionError:
+      logger.error("Connection to server failed!", exc_info=True)
+
+    except requests.exceptions.Timeout:
+      logger.warning("Request Timeout for func:" + str(func) + "! Retrying.")
+
+      try:
+        return func(*args, **kwargs)
+      except Exception as e:
+        logger.error("Retry Failed", exc_info=True)
+
+    except requests.exceptions.RequestException:
+      logger.error("Exception occurred while handling the request for:" + str(func), exc_info=True)
+  return handler
+
+
+
+@requests_error_handeling
 def update_market_list():
   """
   To get the list of all the available markets which are currently trading at binance
@@ -110,6 +147,7 @@ def _retrieve_REST(market):
 
 
 
+@requests_error_handeling
 def retrieve_OHLC(markets):
   """
   To retrieve OHLC data for the required symbols from Binance

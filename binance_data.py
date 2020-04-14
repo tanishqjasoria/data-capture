@@ -11,9 +11,8 @@ BASE_REST = "https://api.binance.com"
 CONN_TEST = "/api/v3/ping"
 SERVER_TIME = "/api/v3/time"
 
-# Additional End Points to retrieve information
-MARKET_PRICE = "/api/v3/ticker/price"
-DATA_24HR = "/api/v3/ticker/24hr"
+# Additional End Points to retrieve information for various trading markets
+EXCHANGE_INFO = '/api/v3/exchangeInfo'
 
 # GET endpoint to retrieve klines data from Binance
 KLINES = '/api/v3/klines'
@@ -27,26 +26,29 @@ logger = logging.getLogger(__name__)
 
 def update_market_list():
   """
-  To get the list of all the available markets
+  To get the list of all the available markets which are currently trading at binance
+  Updates the global variable MARKETS
   Returns:
-    <list> of all the market names
+    <UNIX Time> Server Time
   """
   global MARKETS
 
   # GET the market price data for all the listed symbols on Binance
-  URL = BASE_REST + MARKET_PRICE
+  URL = BASE_REST + EXCHANGE_INFO
   response = requests.get(URL)
-  markets_price_list = json.loads(response.text)
+  exchange_info = json.loads(response.text)
 
   # Use the price list to obtains names of all the markets
   market_names = []
-  for record in markets_price_list:
-    name = record['symbol']
-    market_names.append(name)
+  for market in exchange_info['symbols']:
+    if market['status'] == "TRADING":
+      market_names.append(market['symbol'])
 
   # Populate the global variable
   MARKETS = market_names
   logger.info('Market list updated!')
+
+  return exchange_info['serverTime']
 
 
 

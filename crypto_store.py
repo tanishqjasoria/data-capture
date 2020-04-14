@@ -243,7 +243,7 @@ def _format(measurement, market, OHLC):
 if __name__=='__main__':
 
   # Populate the list of markets listed on Binance
-  binance_data.update_market_list()
+  time_server = binance_data.update_market_list()
 
   # Setup the database for storing market data
   client = database_setup()

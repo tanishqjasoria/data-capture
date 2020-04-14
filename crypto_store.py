@@ -79,6 +79,15 @@ def record_update(client):
   A full pipeline from fetch (from Binance) to insert (InfluxDB)
   """
 
+  # If the server is not available, retry after 10s. If the server is still
+  # not reachable - exception is raised!
+
+  try:
+    binance_data.ping()
+  except Exception:
+    time.sleep(10)
+    binance_data.ping()
+
   logger.info("Record Start.")
   OHLC_data, errors = binance_data.retrieve_OHLC(binance_data.MARKETS)
   json_body = convert_to_json_schema(MEASUREMENT_1M, OHLC_data)
@@ -108,8 +117,9 @@ def run_data_collection(client):
       p = threading.Thread(target=record_update, args=(client,), daemon=True)
       # Start the process to run independently of main
       p.start()
-      # TODO: Define a function which can act as a garbage collector, which can periodicly
-      # check for not active processes and free the resources
+      # TODO: Define a function which can act as a garbage collector,
+      #  which can periodicly check for non active processes, free the
+      #  resources and also return Exceptions to parent thread.
       time.sleep(60)
   except KeyboardInterrupt:
     # Kill all the processes which are alive

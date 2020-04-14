@@ -63,3 +63,24 @@ def database_setup():
   return client
 
 
+
+def get_number_of_record(client, measurement):
+  """
+  Get the number of records of a particular series for all the markets
+  Args:
+    client: <InfluxDBClient>
+    measurement: <str> name of the series
+
+  Returns:
+    <list> - element would be of form [<name_of_market>, <number_of_records>]
+  """
+
+  records = client.query(COUNT_DATA_QUERY.format(measurement))
+  market_numbers = []
+
+  for market in binance_data.MARKETS:
+    for record in records.get_points(tags={'Market': market}):
+      if record:
+        market_numbers.append([market, record['count']])
+
+  return market_numbers

@@ -183,7 +183,6 @@ def calculate_tick_data(client, OHLC_data):
     client.write_points(json_body, time_precision=PRECISION)
     logger.info("[1H] Write to database complete.")
     TICKER_1H = []
-    COUNT = 0
 
 
 

@@ -1,17 +1,18 @@
 import binance_data
-from collections import defaultdict
-from influxdb import InfluxDBClient
 import logging
 import pandas as pd
 import sys
 import time
 import threading
 
+from collections import defaultdict
+from influxdb import InfluxDBClient
+
 # Default HOST and PORT for the local instance of InfluxDB
 HOST = 'localhost'
 PORT = 8086
 
-# Name of the databse where the values needs to be stored
+# Name of the database where the values needs to be stored
 DATABASE = "crypto_ticker"
 
 # Various measurements to be used for storing various ticker data
@@ -21,7 +22,7 @@ MEASUREMENT_15M = 'CRYPTO_15M'
 MEASUREMENT_30M = 'CRYPTO_30M'
 MEASUREMENT_1H = 'CRYPTO_1H'
 
-# Time precision of the Binance server is in miliseconds
+# Time precision of the Binance server is in milliseconds
 PRECISION = 'ms'
 
 # Arrays to store required information to calculate 5M, 15M, 30M, 1H Ticker.
@@ -30,7 +31,7 @@ TICKER_15M = []
 TICKER_30M = []
 TICKER_1H = []
 
-# To store the amount of data points collected, would be useful
+# Store the amount of data points collected. Would be useful,
 # in calculation of tick data for different intervals
 COUNT = 0
 
@@ -41,6 +42,11 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 def database_setup():
+  """
+  Initialize the database for quality check
+  Returns:
+    <InfluxDBClient>
+  """
 
   # Initialise the InfluxDB client
   client = InfluxDBClient(HOST, PORT)
@@ -102,8 +108,8 @@ def run_data_collection(client):
   Now the primary functionality if to retrieve market data from binance
   every 1 minute (1m Ticker). To accomplish that 'record_update' need to
   be scheduled to run every one second. time.sleep() is a blocking call,
-  therefore using the threading module to add parallism to the module
-  The main functionality - spawn a new 'record_update' thtread every 1 minute
+  therefore using the threading module to add parallelism to the module
+  The main functionality - spawn a new 'record_update' thread every 1 minute
   Args:
     client: database client which need to be used to store the collected data
 

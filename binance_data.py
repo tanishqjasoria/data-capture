@@ -17,7 +17,7 @@ EXCHANGE_INFO = '/api/v3/exchangeInfo'
 # GET endpoint to retrieve klines data from Binance
 KLINES = '/api/v3/klines'
 
-# Global list for all the available markets
+# List for all the available markets
 MARKETS = None
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -28,10 +28,10 @@ logger = logging.getLogger(__name__)
 
 
 
-def requests_error_handeling(func):
+def requests_error_handling(func):
   """
-  Decorator for error handeling,
-  Mainly, log and ignore the error as this module is meant to be use periodicly,
+  Decorator for error handling,
+  Mainly, log and ignore the error as this module is meant to be use periodically,
   This ensure safe return in case of an exception.
   Args:
     func:
@@ -60,7 +60,7 @@ def requests_error_handeling(func):
 
 
 
-@requests_error_handeling
+@requests_error_handling
 def update_market_list():
   """
   To get the list of all the available markets which are currently trading at binance
@@ -147,7 +147,7 @@ def _retrieve_REST(market):
 
 
 
-@requests_error_handeling
+@requests_error_handling
 def retrieve_OHLC(markets):
   """
   To retrieve OHLC data for the required symbols from Binance

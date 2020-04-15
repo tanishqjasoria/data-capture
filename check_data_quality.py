@@ -1,8 +1,16 @@
 import argparse
+import base64
 import binance_data
+import time
 import logging
+import os
 
 from influxdb import InfluxDBClient
+
+from sendgrid.helpers.mail import (
+    Mail, Attachment, FileContent, FileName,
+    FileType, Disposition, ContentId)
+from sendgrid import SendGridAPIClient
 
 
 # Default HOST and PORT for the instance of InfluxDB
@@ -167,4 +175,31 @@ if __name__=="__main__":
     rep.write(formart_record.format("% average", average_percent[0],
         average_percent[1], average_percent[2], average_percent[3], average_percent[4]))
 
-  logger.info("Write to file complete. Reporting DONE!")
+  logger.info("Write to file complete. Now, sending the email.")
+
+  message = Mail(
+    from_email='aqryuf7593@hubopss.com',
+    to_emails='tanishqjasoria200@gmail.com',
+    subject='Crypto Capture Report Update: ' + str(time.asctime()),
+    html_content='PFA quality check report for database ' + DATABASE)
+
+  with open(report, 'rb') as rep:
+    data = rep.read()
+
+  encoded_content = base64.b64encode(data).decode()
+  attachment = Attachment()
+  attachment.file_content = FileContent(encoded_content)
+  attachment.file_type = FileType('application/txt')
+  attachment.file_name = FileName('Report.txt')
+  attachment.disposition = Disposition('attachment')
+  attachment.content_id = ContentId(time.asctime())
+  message.attachment = attachment
+
+  try:
+    sendgrid_client = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+    response = sendgrid_client.send(message)
+    logger.info("Email Sent. DONE!")
+  except Exception as e:
+    logger.error("Error Sending EMail!", exc_info=True)
+
+

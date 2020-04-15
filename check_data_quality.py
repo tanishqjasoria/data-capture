@@ -1,5 +1,6 @@
 import argparse
 import binance_data
+import logging
 
 from influxdb import InfluxDBClient
 
@@ -20,6 +21,10 @@ MEASUREMENT_1H = 'CRYPTO_1H'
 
 # Query to get the count of the number of records for each Market for each measurement.
 COUNT_DATA_QUERY = "SELECT COUNT(\"High\") FROM {}..{} GROUP BY \"Market\""
+
+logging.basicConfig(format='%(asctime)s:%(levelname)s- %(message)s|%(name)s',
+    level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 
@@ -114,6 +119,7 @@ if __name__=="__main__":
 
   binance_data.update_market_list()
   client = database_setup()
+  logger.info("Setup Complete.")
 
   # How many records are actually stored in the database?
   numbers_1M = get_number_of_record(client, MEASUREMENT_1M)
@@ -121,6 +127,7 @@ if __name__=="__main__":
   numbers_15M = get_number_of_record(client, MEASUREMENT_15M)
   numbers_30M = get_number_of_record(client, MEASUREMENT_30M)
   numbers_1H = get_number_of_record(client, MEASUREMENT_1H)
+  logger.info("Number of records obtained.")
 
   # What is the percentage of actually stored records?
   percent_1M = [[x[0], 100 * x[1]/count] for x in numbers_1M]
@@ -139,6 +146,7 @@ if __name__=="__main__":
     sum([x[1] for x in percent_30M])/length_markets,
     sum([x[1] for x in percent_1H])/length_markets
   ]
+  logger.info("Computation Complete!")
 
   # Create a report for the quality of data
   with open(report, 'w') as rep:
@@ -158,3 +166,5 @@ if __name__=="__main__":
 
     rep.write(formart_record.format("% average", average_percent[0],
         average_percent[1], average_percent[2], average_percent[3], average_percent[4]))
+
+  logger.info("Write to file complete. Reporting DONE!")

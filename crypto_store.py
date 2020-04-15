@@ -2,7 +2,6 @@ import argparse
 import binance_data
 import logging
 import pandas as pd
-import sys
 import time
 import threading
 

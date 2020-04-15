@@ -6,15 +6,13 @@ import requests
 
 # The base endpoint for the Binance RESTful API
 BASE_REST = "https://api.binance.com"
-
-# API GET endpoints to perform several checks
+# Is the binance server online?
 CONN_TEST = "/api/v3/ping"
+# What's the time at the server?
 SERVER_TIME = "/api/v3/time"
-
-# Additional End Points to retrieve information for various trading markets
+# Which markets are currently trading and additional details?
 EXCHANGE_INFO = '/api/v3/exchangeInfo'
-
-# GET endpoint to retrieve klines data from Binance
+# How to retrieve the KLINE for a market?
 KLINES = '/api/v3/klines'
 
 # List for all the available markets
@@ -31,8 +29,8 @@ logger = logging.getLogger(__name__)
 def requests_error_handling(func):
   """
   Decorator for error handling,
-  Mainly, log and ignore the error as this module is meant to be use periodically,
-  This ensure safe return in case of an exception.
+  Mainly, log and ignore the error as this module is meant to be use periodically.
+  This ensure a safe return in case of an exception.
   Args:
     func:
 
@@ -66,7 +64,7 @@ def update_market_list():
   To get the list of all the available markets which are currently trading at binance
   Updates the global variable MARKETS
   Returns:
-    <UNIX Time> Server Time
+    <time> Server Time in UNIX format
   """
   global MARKETS
 
@@ -75,9 +73,10 @@ def update_market_list():
   response = requests.get(URL)
   exchange_info = json.loads(response.text)
 
-  # Use the price list to obtains names of all the markets
+  # Obtain the list of markets on Binance
   market_names = []
   for market in exchange_info['symbols']:
+    # Is the market currently trading?
     if market['status'] == "TRADING":
       market_names.append(market['symbol'])
 
@@ -94,7 +93,7 @@ def ping():
   To check if the Binance server is reachable
 
   Exceptions:
-    ConnectionError,, if the connection to server is not possible
+    ConnectionError, if the connection to server is not possible
   """
   URL = BASE_REST + CONN_TEST
 
@@ -112,7 +111,7 @@ def server_time():
   """
   To get the server time in UNIX time format
   Returns:
-    <int>
+    <time> server time in UNIX format
   """
   URL = BASE_REST + SERVER_TIME
 
@@ -121,29 +120,6 @@ def server_time():
 
   logger.info("Binance server time: " + str(UNIX_time))
   return UNIX_time
-
-
-
-def _retrieve_REST(market):
-  """
-  To retrieve the data using the RESTful API
-  Args:
-    market: <str> name of the market
-
-  Returns:
-    <dict> of raw OHLC data
-  """
-  URL = BASE_REST + KLINES
-
-  params = {
-    "symbol": market,
-    "interval": '1m',
-    "limit": 1
-  }
-
-  response = requests.get(URL, params=params)
-  data = json.loads(response.text)
-  return data
 
 
 
@@ -191,3 +167,26 @@ def retrieve_OHLC(markets):
 
   logger.info("Data fetch completed!")
   return OHLC_markets, response_error
+
+
+
+def _retrieve_REST(market):
+  """
+  To retrieve the data using the RESTful API
+  Args:
+    market: <str> name of the market
+
+  Returns:
+    <dict> of raw OHLC data
+  """
+  URL = BASE_REST + KLINES
+
+  params = {
+    "symbol": market,
+    "interval": '1m',
+    "limit": 1
+  }
+
+  response = requests.get(URL, params=params)
+  data = json.loads(response.text)
+  return data

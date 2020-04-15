@@ -1,6 +1,6 @@
 sudo pt update
 sudo apt upgrade
-sudo apt install python3-pip
+sudo apt install -y python3-pip
 pip3 install --user -r requirements.txt
 wget -qO- https://repos.influxdata.com/influxdb.key | sudo apt-key add -
 source /etc/os-release

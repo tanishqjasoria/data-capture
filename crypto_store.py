@@ -309,8 +309,8 @@ if __name__=='__main__':
       # Wait for new KLINE for 1M to start
       while True:
         # time in seconds
-        time = binance_data.server_time()//1000
-        if time % 60 <= 5:
+        curr_time = binance_data.server_time()//1000
+        if curr_time % 60 <= 5:
           break
         time.sleep(0.5)
 

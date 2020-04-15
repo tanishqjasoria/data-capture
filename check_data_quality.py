@@ -22,7 +22,7 @@ MEASUREMENT_1H = 'CRYPTO_1H'
 # Query to get the count of the number of records for each Market for each measurement.
 COUNT_DATA_QUERY = "SELECT COUNT(\"High\") FROM {}..{} GROUP BY \"Market\""
 
-logging.basicConfig(format='%(asctime)s:%(levelname)s- %(message)s|%(name)s',
+logging.basicConfig(format='%(asctime)s:%(levelname)s- %(message)s|CHECK_DATA',
     level=logging.INFO)
 logger = logging.getLogger(__name__)
 

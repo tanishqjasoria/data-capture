@@ -118,7 +118,6 @@ def server_time():
   response = requests.get(URL)
   UNIX_time = json.loads(response.text)["serverTime"]
 
-  logger.info("Binance server time: " + str(UNIX_time))
   return UNIX_time
 
 

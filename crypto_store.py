@@ -2,6 +2,7 @@ import argparse
 import binance_data
 import logging
 import pandas as pd
+import subprocess
 import time
 import threading
 
@@ -34,6 +35,9 @@ TICKER_1H = []
 # Store the amount of data points collected. Would be useful,
 # in calculation of tick data for different intervals
 COUNT = 0
+
+# Quality check intervals(in hours)
+INTERVAL = 2
 
 LOCK = threading.Lock()
 
@@ -151,6 +155,21 @@ def run_data_collection(client):
     # Kill all the processes which are alive
     logger.error("KeyboardInterrupt! Exiting.")
     exit(1)
+
+
+
+def setup_run_testing_module():
+  """
+  Start the 'check_data_quality at regular intervals
+  """
+
+  proc = subprocess.Popen(
+      ["python", "check_data_quality.py", "-DB"," crypto_ticker", "-C", str(COUNT)],
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE)
+  time.sleep(3600 * INTERVAL)
+
+
 
 
 
@@ -287,6 +306,19 @@ if __name__=='__main__':
 
   if args['mode']:
     if args['mode'] == 'run':
+      # Wait for new KLINE for 1M to start
+      while True:
+        # time in seconds
+        time = binance_data.server_time()//1000
+        if time % 60 <= 5:
+          break
+        time.sleep(0.5)
+
+      logger.info("Initiating the testing module.")
+      quality_check = threading.Thread(target=setup_run_testing_module, daemon=True)
+      quality_check.start()
+
+      logger.info("Starting data collection at: " + str(binance_data.server_time()))
       run_data_collection()
     else:
       logger.error("Enter valid arguments")

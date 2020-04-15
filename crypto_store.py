@@ -319,7 +319,7 @@ if __name__=='__main__':
       quality_check.start()
 
       logger.info("Starting data collection at: " + str(binance_data.server_time()))
-      run_data_collection()
+      run_data_collection(client)
     else:
       logger.error("Enter valid arguments")
       exit(1)

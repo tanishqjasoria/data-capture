@@ -1,3 +1,4 @@
+import argparse
 import binance_data
 import logging
 import pandas as pd
@@ -40,6 +41,26 @@ LOCK = threading.Lock()
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+
+
+
+def parse_arguments():
+  """
+  Parse command line arguments.
+
+  Returns:
+    <dict> parsed command line arguments.
+  """
+
+  ap = argparse.ArgumentParser()
+  ap.add_argument("-M", "--mode", required=False, help="Host Address of InfluxDB")
+  args = vars(ap.parse_args())
+
+  return args
+
+
 
 def database_setup():
   """
@@ -257,15 +278,17 @@ def _format(measurement, market, OHLC):
 
 if __name__=='__main__':
 
+  args = parse_arguments()
+
   # Populate the list of markets listed on Binance
   time_server = binance_data.update_market_list()
 
   # Setup the database for storing market data
   client = database_setup()
 
-  if len(sys.argv) == 2:
-    if sys.argv[1] == 'run':
-      run_data_collection(client)
+  if args['mode']:
+    if args['mode'] == 'run':
+      run_data_collection()
     else:
-      print("Enter valid argument")
+      logger.error("Enter valid arguments")
       exit(1)

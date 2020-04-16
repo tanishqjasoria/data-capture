@@ -162,13 +162,13 @@ def setup_run_testing_module():
   """
   Start the 'check_data_quality at regular intervals
   """
-
-  time.sleep(3600 * INTERVAL)
-  proc = subprocess.Popen(
-      ["python3", "check_data_quality.py", "-DB"," crypto_ticker", "-C", str(COUNT)],
-      stdout=subprocess.PIPE,
-      stderr=subprocess.PIPE)
-  logger.error(proc.communicate())
+  while True:
+    time.sleep(3600 * INTERVAL)
+    proc = subprocess.Popen(
+        ["python3", "check_data_quality.py", "-DB"," crypto_ticker", "-C", str(COUNT)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    logger.error(proc.communicate())
 
 
 

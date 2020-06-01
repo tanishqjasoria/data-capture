@@ -1,4 +1,4 @@
-sudo pt update
+sudo apt update
 sudo apt upgrade
 sudo apt install -y python3-pip
 pip3 install --user -r requirements.txt
